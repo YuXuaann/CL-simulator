@@ -1,0 +1,14 @@
+# normal
+.vscode
+
+# for test
+src/dut-core/test
+src/testbench/test
+
+# tmp
+compile
+wave
+
+# format
+.clang-format
+*.gtkw
