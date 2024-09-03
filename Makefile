@@ -1,16 +1,21 @@
 # 配置----------------------------------------------------------------------------------
-TOP = alu
+
+
+TOP = mycpu_top
+# todo: 与testbench中的文件名同步
 WAVENAME = waveform
 
+
+
 # 配置结束------------------------------------------------------------------------------
-VFLAGS = --cc --trace-fst --trace-structs -Wall --build -j `nproc`
-DUT_SRC_DIR = ./src/dut-core/test
+VFLAGS = --cc --trace-fst --trace-structs -Wall --build -j `nproc` -Wno-fatal
+DUT_SRC_DIR = ./src/ref-core/NoAXI-core
 SOURCE_FILE = $(shell find $(DUT_SRC_DIR) -name '*.svh') \
 				$(shell find $(DUT_SRC_DIR) -name '*.vh') \
 				$(shell find $(DUT_SRC_DIR) -name '*.v') \
 				$(shell find $(DUT_SRC_DIR) -name '*.sv')
 SOURCE_DIR = $(addprefix -I, $(shell find $(DUT_SRC_DIR) -type d))
-TESTBENCH = ./src/testbench/test/alu_tb.cpp
+TESTBENCH = ./src/testbench/testbench.cpp
 OBJ_DIR = ./compile
 WAVE_DIR = ./wave
 
@@ -18,7 +23,6 @@ SHELL := /bin/bash
 .PHONY: all clean help view
 
 all: ${OBJ_DIR} ${WAVE_DIR}
-	rm -rf ${OBJ_DIR}
 
 ${OBJ_DIR}: ${SOURCE_FILE} ${TESTBENCH} 
 	verilator ${VFLAGS} \
@@ -48,3 +52,5 @@ help:
 	@echo -e "     compile: Compile *.sv and run the testbench"
 	@echo -e "        wave: Generate wave"
 	@echo -e "        help: Show this help message\e[0m"
+	@echo
+	@echo -e "\e[32mtips: Remember to press "ctrl + S" when you are viewing waveform !! \e[0m"
