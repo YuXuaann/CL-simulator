@@ -9,7 +9,7 @@
 #endif
 
 #ifndef MAX_SIM_TIME
-#define MAX_SIM_TIME 500 // todo:仿真总时钟边沿数，未来统一成可设定项
+#define MAX_SIM_TIME 1000 // todo:仿真总时钟边沿数，未来统一成可设定项
 #endif
 
 #ifndef RESET_TIME
@@ -73,7 +73,7 @@ void sim_step(dut* dut, int& reset_time, memory* mem, simpleAXI<>* axi) {
 	dut->rlast = axi->rlast;
 	dut->rvalid = axi->rvalid;
 	dut->awready = axi->awready;
-	dut->wready = axi->awready;
+	dut->wready = axi->wready;
 	dut->bid = axi->bid;
 	dut->bresp = 0;
 	dut->bvalid = axi->bvalid;
@@ -86,18 +86,17 @@ void sim(dut* dut, trace* trace, int& reset_time) {
 	mem->read_bin("./src/test-bin/main.bin");
 
 	for (int sim_time = 0; sim_time < MAX_SIM_TIME; sim_time++) {
-#ifdef DEBUG
-		if (sim_time % 2 == 0)
-			debugtime(sim_time);
-#endif
 		sim_step(dut, reset_time, mem, axi);
 #ifdef DEBUG
-		if (dut->debug_wb_rf_we) {
-			GREEN;
-			printf("pc   = %08lx\n", dut->debug_wb_pc);
-			printf("reg  = %08lx\n", dut->debug_wb_rf_wnum);
-			printf("data = %08lx\n", dut->debug_wb_rf_wdata);
-			RESET;
+		if (sim_time % 2 == 0) {
+			if (dut->debug_wb_rf_we) {
+				debugtime(sim_time);
+				GREEN;
+				printf("pc   = %08lx\n", dut->debug_wb_pc);
+				printf("reg  = %08lx\n", dut->debug_wb_rf_wnum);
+				printf("data = %08lx\n", dut->debug_wb_rf_wdata);
+				RESET;
+			}
 		}
 #endif
 #ifdef TRACE_ON

@@ -1,3 +1,6 @@
+#ifndef AXI_HPP
+#define AXI_HPP
+
 // #define RANDOM
 #define RANDOM_MAX 20
 #define WORK_RANDOM_MAX 4
@@ -109,6 +112,7 @@ void simpleAXI<ADDR_WIDTH, DATA_WIDTH, ID_WIDTH>::eval(dev* dev) {
 	static int w_len = 0;
 	static int w_size = 0;
 	static int w_id = 0;
+	static uint64_t w_addr = 0;
 	static std::vector<uint64_t> w_data(8, 0);
 
 	if (aresetn == false) {
@@ -122,6 +126,7 @@ void simpleAXI<ADDR_WIDTH, DATA_WIDTH, ID_WIDTH>::eval(dev* dev) {
 		return;
 	}
 
+	// read state machine
 	switch (rstate) {
 	case AR:
 #ifdef DEBUG
@@ -174,4 +179,79 @@ void simpleAXI<ADDR_WIDTH, DATA_WIDTH, ID_WIDTH>::eval(dev* dev) {
 		}
 		break;
 	}
+
+	// write state machine
+	switch (wstate) {
+	case AW:
+#ifdef DEBUG
+		// printf("write_state = AW\n");
+#endif
+		awready = true;
+		wready = false;
+		bid = 0;
+		bvalid = false;
+		if (awvalid) {
+			wstate = W;
+			w_addr = awaddr;
+			w_count = 0;
+			w_len = awlen;
+			w_size = awsize;
+			w_id = awid;
+#ifdef RANDOM
+			w_wait_time = rand() % RANDOM_MAX;
+#else
+			w_wait_time = WAIT_TIME;
+#endif
+		}
+		break;
+
+	case W:
+#ifdef DEBUG
+		// printf("write_state = W\n");
+#endif
+		awready = false;
+		if (w_wait_time) {
+			wready = false;
+			--w_wait_time;
+		} else {
+			wready = true;
+			// todo: 暂定写操作没有突发
+			if (wvalid && w_id == wid) {
+				dev->write(w_addr + w_count * (1 << w_size), (1 << w_size), wdata);
+				debugprint(dev->read(w_addr + w_count * (1 << w_size), (1 << w_size)));
+				w_wait_time = rand() % WORK_RANDOM_MAX;
+				++w_count;
+				if (wlast) {
+					if (w_count != w_len + 1) {
+						RED;
+						printf("写入数据长度错误\n");
+						RESET;
+						exit(1);
+					}
+					wstate = B;
+				}
+			}
+		}
+		break;
+
+	case B:
+#ifdef DEBUG
+		// printf("write_state = B\n");
+#endif
+		wready = false;
+		if (w_wait_time) {
+			bvalid = false;
+			--w_wait_time;
+		} else {
+			awready = false;
+			wready = false;
+			if (bready) {
+				bid = w_id;
+				bvalid = true;
+				wstate = AW;
+			}
+		}
+		break;
+	}
 }
+#endif

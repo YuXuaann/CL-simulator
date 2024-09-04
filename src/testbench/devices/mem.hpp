@@ -1,3 +1,6 @@
+#ifndef MEM_HPP
+#define MEM_HPP
+
 #include "dev.hpp"
 #include <fstream>
 #include <map>
@@ -26,8 +29,10 @@ public:
 		fread(buf, 1, size, fp);
 		fclose(fp);
 
-		printf("\e[32mbin文件路径正确\e[0m\n");
-		printf("\e[32mbin文件size = %lx\e[0m\n", size);
+		GREEN;
+		printf("bin文件路径正确\n");
+		printf("bin文件size = %lx\n", size);
+		RESET;
 
 		for (uint64_t i = 0; i < size; i++) {
 			mem[start_addr + i] = buf[i];
@@ -59,3 +64,5 @@ public:
 		}
 	}
 };
+
+#endif
