@@ -9,12 +9,14 @@
 #endif
 
 #ifndef MAX_SIM_TIME
-#define MAX_SIM_TIME 1000 // todo:仿真总时钟边沿数，未来统一成可设定项
+#define MAX_SIM_TIME 500 // todo:仿真总时钟边沿数，未来统一成可设定项
 #endif
 
 #ifndef RESET_TIME
 #define RESET_TIME 10 // todo:复位时间，未来统一成可设定项
 #endif
+
+#define DEBUG
 
 #include "Vmycpu_top.h" // todo: 通过TOP_NAME生成
 #include "axi/axi.hpp"
@@ -27,20 +29,20 @@
 typedef Vmycpu_top dut; // todo: 通过TOP_NAME生成
 typedef VerilatedFstC trace;
 
-void sim_step(dut* dut, int& reset_time) {
-	static dev* mem = new memory;
-	static simpleAXI<>* axi = new simpleAXI<>;
-
+void sim_step(dut* dut, int& reset_time, memory* mem, simpleAXI<>* axi) {
 	dut->ext_int = 0;
 	dut->aclk ^= 1;
+	dut->eval();
 
 	if (reset_time) {
 		--reset_time;
 		dut->aresetn = 0;
 		axi->aresetn = 0;
-		dut->eval();
 		return;
 	}
+
+	if (!dut->aclk)
+		return;
 
 	dut->aresetn = 1;
 	axi->aresetn = 1;
@@ -50,41 +52,54 @@ void sim_step(dut* dut, int& reset_time) {
 	axi->arlen = dut->arlen;
 	axi->arsize = dut->arsize;
 	axi->arvalid = dut->arvalid;
-	dut->arready = axi->arready;
-
-	dut->rid = axi->rid;
-	dut->rdata = axi->rdata;
-	dut->rresp = 0;
-	dut->rlast = axi->rlast;
-	dut->rvalid = axi->rvalid;
 	axi->rready = dut->rready;
-
 	axi->awid = dut->awid;
 	axi->awaddr = dut->awaddr;
 	axi->awlen = dut->awlen;
 	axi->awsize = dut->awsize;
 	axi->awvalid = dut->awvalid;
-	dut->awready = axi->awready;
-
 	axi->wid = dut->wid;
 	axi->wdata = dut->wdata;
 	axi->wstrb = dut->wstrb;
 	axi->wlast = dut->wlast;
 	axi->wvalid = dut->wvalid;
-	dut->wready = axi->awready;
+	axi->bready = dut->bready;
+	axi->eval(mem);
 
+	dut->arready = axi->arready;
+	dut->rid = axi->rid;
+	dut->rdata = axi->rdata;
+	dut->rresp = 0;
+	dut->rlast = axi->rlast;
+	dut->rvalid = axi->rvalid;
+	dut->awready = axi->awready;
+	dut->wready = axi->awready;
 	dut->bid = axi->bid;
 	dut->bresp = 0;
 	dut->bvalid = axi->bvalid;
-	axi->bready = dut->bready;
-
-	axi->eval(mem);
-	dut->eval();
 }
 
 void sim(dut* dut, trace* trace, int& reset_time) {
+
+	static memory* mem = new memory;
+	static simpleAXI<>* axi = new simpleAXI<>;
+	mem->read_bin("./src/test-bin/main.bin");
+
 	for (int sim_time = 0; sim_time < MAX_SIM_TIME; sim_time++) {
-		sim_step(dut, reset_time);
+#ifdef DEBUG
+		if (sim_time % 2 == 0)
+			debugtime(sim_time);
+#endif
+		sim_step(dut, reset_time, mem, axi);
+#ifdef DEBUG
+		if (dut->debug_wb_rf_we) {
+			GREEN;
+			printf("pc   = %08lx\n", dut->debug_wb_pc);
+			printf("reg  = %08lx\n", dut->debug_wb_rf_wnum);
+			printf("data = %08lx\n", dut->debug_wb_rf_wdata);
+			RESET;
+		}
+#endif
 #ifdef TRACE_ON
 		trace->dump(sim_time);
 #endif

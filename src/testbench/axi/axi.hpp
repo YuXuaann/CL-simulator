@@ -125,7 +125,7 @@ void simpleAXI<ADDR_WIDTH, DATA_WIDTH, ID_WIDTH>::eval(dev* dev) {
 	switch (rstate) {
 	case AR:
 #ifdef DEBUG
-		printf("read_state = AR\n");
+		// printf("read_state = AR\n");
 #endif
 		arready = true;
 		rid = 0;
@@ -151,9 +151,14 @@ void simpleAXI<ADDR_WIDTH, DATA_WIDTH, ID_WIDTH>::eval(dev* dev) {
 
 	case R:
 #ifdef DEBUG
-		printf("read_state = R\n");
+		// printf("read_state = R\n");
+		// for (int i = 0; i <= r_len; i++) {
+		// 	printf("r_data[%d] = %08lx\n", i, r_data[i]);
+		// }
 #endif
+		arready = false;
 		if (r_wait_time) {
+			rvalid = false;
 			--r_wait_time;
 		} else {
 			if (rready) {

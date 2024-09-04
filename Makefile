@@ -15,7 +15,7 @@ SOURCE_FILE = $(shell find $(DUT_SRC_DIR) -name '*.svh') \
 				$(shell find $(DUT_SRC_DIR) -name '*.v') \
 				$(shell find $(DUT_SRC_DIR) -name '*.sv')
 SOURCE_DIR = $(addprefix -I, $(shell find $(DUT_SRC_DIR) -type d))
-TESTBENCH = ./src/testbench/testbench.cpp
+TESTBENCH_DIR = ./src/testbench
 OBJ_DIR = ./compile
 WAVE_DIR = ./wave
 
@@ -24,11 +24,11 @@ SHELL := /bin/bash
 
 all: ${OBJ_DIR} ${WAVE_DIR}
 
-${OBJ_DIR}: ${SOURCE_FILE} ${TESTBENCH} 
+${OBJ_DIR}: ${SOURCE_FILE} ${TESTBENCH_DIR} 
 	verilator ${VFLAGS} \
 	--Mdir $(OBJ_DIR) \
 	--top $(TOP) $(SOURCE_FILE) ${SOURCE_DIR} \
-	--exe ${TESTBENCH} 
+	--exe ${TESTBENCH_DIR}/testbench.cpp
 
 ${WAVE_DIR}: ${OBJ_DIR}
 	mkdir -p ${WAVE_DIR}
