@@ -8,7 +8,14 @@ WAVENAME = waveform
 
 
 # 配置结束------------------------------------------------------------------------------
-VFLAGS = --cc --trace-fst --trace-structs -Wall --build -j `nproc` -Wno-fatal
+UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Linux)
+        NPROC = $(shell nproc)
+    endif
+    ifeq ($(UNAME_S),Darwin)
+        NPROC = $(shell sysctl -n hw.ncpu)
+    endif
+VFLAGS = --cc --trace-fst --trace-structs -Wall --build -j ${NPROC} -Wno-fatal
 DUT_SRC_DIR = ./src/ref-core/NoAXI-core
 SOURCE_FILE = $(shell find $(DUT_SRC_DIR) -name '*.svh') \
 				$(shell find $(DUT_SRC_DIR) -name '*.vh') \
@@ -32,7 +39,7 @@ ${OBJ_DIR}: ${SOURCE_FILE} ${TESTBENCH_DIR}
 
 ${WAVE_DIR}: ${OBJ_DIR}
 	mkdir -p ${WAVE_DIR}
-	make -C ${OBJ_DIR} -f V$(TOP).mk V$(TOP) -j `nproc`
+	make -C ${OBJ_DIR} -f V$(TOP).mk V$(TOP) -j ${NPROC}
 	${OBJ_DIR}/V$(TOP)
 
 view:

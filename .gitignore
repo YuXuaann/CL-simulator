@@ -12,3 +12,6 @@ wave
 # format
 .clang-format
 *.gtkw
+
+# reference
+NoAXI-LoongArch-test
