@@ -10,9 +10,14 @@ public:
 };
 
 class confreg : public dev {
-private:
+public:
     uint64_t start_addr;
     uint32_t size;
+
+    confreg(uint64_t start_addr, uint32_t size) :
+        start_addr(start_addr),
+        size(size) {
+    }
 };
 
 #endif

@@ -29,28 +29,105 @@
 #define OPEN_TRACE_ADDR 0xff30   // 32'hbfaf_fff8
 #define NUM_MONITOR_ADDR 0xff40  // 32'hbfaf_fffc
 
-const std::vector<uint64_t> led_addr = {LED_ADDR, LED_RG0_ADDR};
-const uint8_t led_size = 0x10;
+#define CONFREG_VECTOR                                                                                                \
+    {new CR0(), new CR1(), new CR2(), new CR3(), new CR4(), new CR5(), new CR6(), new CR7(),                          \
+     new LED(), new LED_RG0(), new LED_RG1(), new NUM(), new SWITCH(), new BTN_KEY(), new BTN_STEP(), new SW_INTER(), \
+     new TIMER(), new IO_SIMU(), new VIRTUAL_UART(), new SIMU_FLAG(), new OPEN_TRACE(), new NUM_MONITOR()}
 
-class CR : public confreg {
-private:
-    std::map<uint64_t, uint8_t> mem;
+#define ERRORSIZE(x)                                         \
+    if (x != 0x4) {                                          \
+        RED;                                                 \
+        printf("Error! confreg read/write size is not 4\n"); \
+        RESET;                                               \
+        exit(1);                                             \
+    }
 
+#define ERRORWRITE(x)                                  \
+    RED;                                               \
+    printf("Error! write to %s is not allowed\n", #x); \
+    RESET;                                             \
+    exit(1);
+
+template <uint64_t START_ADDR, uint64_t SIZE>
+class normal_RW_confreg : public confreg {
 public:
-    const std::vector<uint64_t> cr_addr = {CR0_ADDR, CR1_ADDR, CR2_ADDR, CR3_ADDR, CR4_ADDR, CR5_ADDR, CR6_ADDR, CR7_ADDR};
-    const uint8_t cr_size = 0x10;
-    CR() :
-        start_addr(cr_addr[0]), size(cr_size) {
+    uint64_t mem;
+    normal_RW_confreg() :
+        confreg(START_ADDR, SIZE) {
+        mem = 0;
     }
     uint64_t read(uint64_t addr, uint8_t size) override {
-        if (size != 0x4) {
-            RED;
-            printf("Error! size is not 4\n");
-            RESET;
-            exit(1);
-        }
+        ERRORSIZE(size);
+        return mem;
     }
     void write(uint64_t addr, uint8_t size, uint64_t data) override {
+        ERRORSIZE(size);
+        mem = data;
+        return;
+    }
+};
+
+template <uint64_t START_ADDR, uint64_t SIZE>
+class normal_R_confreg : public confreg {
+public:
+    uint64_t mem;
+    normal_R_confreg() :
+        confreg(START_ADDR, SIZE) {
+        mem = 0;
+    }
+    uint64_t read(uint64_t addr, uint8_t size) override {
+        ERRORSIZE(size);
+        return mem;
+    }
+    void write(uint64_t addr, uint8_t size, uint64_t data) override {
+        ERRORWRITE(normal_R_confreg);
+    }
+};
+
+class CR0 : public normal_RW_confreg<CR0_ADDR, 0x4> {};
+class CR1 : public normal_RW_confreg<CR1_ADDR, 0x4> {};
+class CR2 : public normal_RW_confreg<CR2_ADDR, 0x4> {};
+class CR3 : public normal_RW_confreg<CR3_ADDR, 0x4> {};
+class CR4 : public normal_RW_confreg<CR4_ADDR, 0x4> {};
+class CR5 : public normal_RW_confreg<CR5_ADDR, 0x4> {};
+class CR6 : public normal_RW_confreg<CR6_ADDR, 0x4> {};
+class CR7 : public normal_RW_confreg<CR7_ADDR, 0x4> {};
+class LED : public normal_R_confreg<LED_ADDR, 0x4> {};
+class LED_RG0 : public normal_R_confreg<LED_RG0_ADDR, 0x4> {};
+class LED_RG1 : public normal_R_confreg<LED_RG1_ADDR, 0x4> {};
+class NUM : public normal_RW_confreg<NUM_ADDR, 0x4> {};
+class SWITCH : public normal_R_confreg<SWITCH_ADDR, 0x4> {};
+class BTN_KEY : public normal_R_confreg<BTN_KEY_ADDR, 0x4> {
+    uint64_t read(uint64_t addr, uint8_t size) override {
+        ERRORSIZE(size);
+        return 0;
+    }
+};
+class BTN_STEP : public normal_R_confreg<BTN_STEP_ADDR, 0x4> {
+    uint64_t read(uint64_t addr, uint8_t size) override {
+        ERRORSIZE(size);
+        return 0;
+    }
+};
+class SW_INTER : public normal_R_confreg<SW_INTER_ADDR, 0x4> {};
+class TIMER : public normal_RW_confreg<TIMER_ADDR, 0x4> {};
+class IO_SIMU : public normal_RW_confreg<IO_SIMU_ADDR, 0x4> {
+    void write(uint64_t addr, uint8_t size, uint64_t data) override {
+        mem = ((data & 0xffff) << 16) | (data >> 16);
+        return;
+    }
+};
+class VIRTUAL_UART : public normal_RW_confreg<VIRTUAL_UART_ADDR, 0x4> {};
+class SIMU_FLAG : public normal_RW_confreg<SIMU_FLAG_ADDR, 0x4> {};
+class OPEN_TRACE : public normal_RW_confreg<OPEN_TRACE_ADDR, 0x4> {
+    void write(uint64_t addr, uint8_t size, uint64_t data) override {
+        mem = data != 0;
+        return;
+    }
+};
+class NUM_MONITOR : public normal_RW_confreg<NUM_MONITOR_ADDR, 0x4> {
+    void write(uint64_t addr, uint8_t size, uint64_t data) override {
+        mem = data & 1;
         return;
     }
 };
