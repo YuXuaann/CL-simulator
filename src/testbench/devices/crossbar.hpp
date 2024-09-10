@@ -22,9 +22,9 @@ public:
     uint64_t read(uint64_t addr, uint8_t size) override {
         for (auto device : devices) {
             if (addr >= device->start_addr && addr < device->start_addr + device->size) {
-                GREEN;
-                printf("Confreg Read Address: %lx\n", addr);
-                RESET;
+                // GREEN;
+                // printf("Confreg Read Address: %lx\n", addr);
+                // RESET;
                 return device->read(addr, size);
             }
         }
@@ -33,9 +33,9 @@ public:
     void write(uint64_t addr, uint8_t size, uint64_t data) override {
         for (auto device : devices) {
             if (addr >= device->start_addr && addr < device->start_addr + device->size) {
-                GREEN;
-                printf("Confreg Write Address: %lx\n", addr);
-                RESET;
+                // GREEN;
+                // printf("Confreg Write Address: %lx\n", addr);
+                // RESET;
                 return device->write(addr, size, data);
             }
         }

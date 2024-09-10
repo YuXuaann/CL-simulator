@@ -85,8 +85,6 @@ void sim(dut *dut, trace *trace, int &reset_time) {
     static memory *mem = new memory;
     static simpleAXI<> *axi = new simpleAXI<>;
     mem->read_bin("./src/test-bin/main.bin");
-    // static std::vector<confreg *> confreg_vector = CONFREG_VECTOR;
-    // static std::vector<confreg *> confreg_vector = {new CR0};
     static crossbar *crossbar = new class crossbar(CONFREG_VECTOR, mem);
 
     for (int sim_time = 0; sim_time < MAX_SIM_TIME; sim_time++) {
