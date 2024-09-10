@@ -61,9 +61,9 @@ class normal_RW_confreg : public confreg {
 public:
     uint64_t mem;
     const char *name;
-    normal_RW_confreg(const char *name = "") :
+    normal_RW_confreg(const char *_name = "") :
         confreg(START_ADDR, SIZE) {
-        name = name;
+        name = _name;
         mem = 0;
     }
     uint64_t read(uint64_t addr, uint8_t size) override {
@@ -89,9 +89,9 @@ class normal_R_confreg : public confreg {
 public:
     uint64_t mem;
     const char *name;
-    normal_R_confreg(const char *name = "") :
+    normal_R_confreg(const char *_name = "") :
         confreg(START_ADDR, SIZE) {
-        name = name;
+        name = _name;
         mem = 0;
     }
     uint64_t read(uint64_t addr, uint8_t size) override {
